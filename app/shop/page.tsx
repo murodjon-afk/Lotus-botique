@@ -3,27 +3,43 @@ import { motion } from 'framer-motion';
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Variants } from 'framer-motion';
-const products = [
-  { id: 1, name: "Noir Coat", price: "$3,200", image: "/i.jpg", type: "vertical" },
-  { id: 2, name: "Silk Scarf", price: "$450", image: "/i.jpg", type: "square" },
-  { id: 3, name: "Minimalist Tote", price: "$1,800", image: "/i.jpg", type: "square" },
-  { id: 4, name: "Luna Dress", price: "$2,900", image: "/i.jpg", type: "vertical" },
-  { id: 5, name: "Wool Trousers", price: "$1,200", image: "/i.jpg", type: "vertical" },
-  { id: 6, name: "Essence Perfume", price: "$350", image: "/i.jpg", type: "square" },
-    { id: 7, name: "Noir Coat", price: "$3,200", image: "/i.jpg", type: "vertical" },
-  { id: 8, name: "Silk Scarf", price: "$450", image: "/i.jpg", type: "square" },
-  { id: 9, name: "Minimalist Tote", price: "$1,800", image: "/i.jpg", type: "square" },
-  { id: 10, name: "Luna Dress", price: "$2,900", image: "/i.jpg", type: "vertical" },
-  { id: 11, name: "Wool Trousers", price: "$1,200", image: "/i.jpg", type: "vertical" },
-  { id: 12, name: "Essence Perfume", price: "$350", image: "/i.jpg", type: "square" },
-];
-export default function Shop() {
-  const [loaded, setLoaded] = useState(false);
+import { toast } from 'sonner';
+type Product = {
+  id: number;
+  name: string;
+  price: number | string;
+  image: string;
+  type:string;
+};
 
+export default function Shop() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loaded, setLoaded] = useState(false);
+ const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     setLoaded(true);
   }, []);
-
+ useEffect(() => {
+  async function getProducts() {
+    try {
+      setLoading(true);
+      // Заменяем локальный путь на твой реальный API на Vercel
+      const res = await fetch("https://lotus-api-rpoz.vercel.app/api/products"); 
+      
+      if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+      const data = await res.json();
+      
+      setProducts(data);
+    } catch (err) {
+      setError("Не удалось загрузить товары");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+  getProducts();
+}, []);
   // Анимация появления заголовка
   const titleVariant: Variants = {
     hidden: { opacity: 0, y: 30 },
@@ -64,7 +80,24 @@ export default function Shop() {
       label: "CONCEPT STORE"
     }
   ];
+const addToCart = (productId: number) => {
+  const currentCart = localStorage.getItem('lotus_cart');
+  let cartIds: number[] = currentCart ? JSON.parse(currentCart) : [];
 
+  if (!cartIds.includes(productId)) {
+    cartIds.push(productId);
+    localStorage.setItem('lotus_cart', JSON.stringify(cartIds));
+    
+    // ВОТ ОН - КРАСИВЫЙ АЛЕРТ
+    toast.success('Added to Bag', {
+      description: 'Product successfully added to your collection.',
+      style: { background: '#000', color: '#fff', border: '1px solid #333' }
+    });
+    
+  } else {
+    toast.error('Already in Bag');
+  }
+};
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
       
@@ -151,22 +184,41 @@ export default function Shop() {
         transition={{ duration: 0.8 }}
         className="relative group break-inside-avoid mb-6 cursor-pointer"
       >
-        <div className={`relative overflow-hidden rounded-xl bg-zinc-900 
-          ${product.type === 'vertical' ? 'aspect-[2/3]' : 'aspect-square'}`}
-        >
+     <div
+  className={`relative overflow-hidden rounded-xl bg-zinc-900 
+    ${
+      product.type === "horizontal"
+        ? "aspect-[4/5]"
+        : product.type === "vertical"
+        ? "aspect-[3/2]"
+        : product.type === "square"
+        ? "aspect-square"
+        : "aspect-square"
+    }`}
+>
+
+          
+        
           <Image
             src={product.image}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            className=" transition-transform duration-700 group-hover:scale-105"
           />
           
           {/* Overlay при наведении */}
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
-             <button className="w-full py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-sm translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-               Quick Add +
-             </button>
-          </div>
+      {/* Находим этот блок в твоем коде */}
+<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-6">
+  <button 
+    onClick={(e) => {
+      e.stopPropagation(); // Чтобы не сработал переход по ссылке, если карточка — ссылка
+      addToCart(product.id);
+    }}
+    className="w-full py-3 bg-white text-black text-[10px] font-bold uppercase tracking-widest rounded-sm translate-y-4 group-hover:translate-y-0 transition-transform duration-500 hover:bg-zinc-200 active:scale-95"
+  >
+    Quick Add +
+  </button>
+</div>
         </div>
 
         {/* Инфо о продукте под фото */}

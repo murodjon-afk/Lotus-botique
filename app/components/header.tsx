@@ -1,10 +1,14 @@
 'use client'
+import Image from "next/image";
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, Variants } from 'framer-motion'; // Добавили Variants
+import { useState, useEffect  } from 'react';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import Link from 'next/link';
+// Импортируем методы NextAuth
+import { signIn, signOut, useSession } from "next-auth/react";
 
 const Header = () => {
+  const { data: session } = useSession(); // Получаем данные о сессии
   const [loaded, setLoaded] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
@@ -17,30 +21,21 @@ const Header = () => {
     { name: "Collection", href: "/collection" },
     { name: "Shop", href: "/shop" },
     { name: "About", href: "/about" },
-    { name: "Showcase", href: "#" },
+        { name: "cart", href: "/cart" },
+
   ];
 
-  // ИСПРАВЛЕННЫЙ БЛОК: Добавлена типизация Variants
   const menuVariants: Variants = {
-    closed: { 
-      opacity: 0, 
-      scale: 0.95, 
-      y: -20 
-    },
+    closed: { opacity: 0, y: "-100%" },
     opened: { 
       opacity: 1, 
-      scale: 1, 
       y: 0,
-      transition: { 
-        duration: 0.4, 
-        ease: [0.23, 1, 0.32, 1] // Теперь TS поймет, что это валидный ease
-      }
+      transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] }
     },
     exit: { 
       opacity: 0, 
-      scale: 0.95, 
-      y: -20, 
-      transition: { duration: 0.3 } 
+      y: "-100%", 
+      transition: { duration: 0.4 } 
     }
   };
 
@@ -49,21 +44,33 @@ const Header = () => {
       <header
         className={`
           fixed top-0 left-1/2 -translate-x-1/2 w-[95%] max-w-[1400px] z-[100] 
-          flex items-center justify-between px-6 md:px-8 py-4 mt-6
+          flex items-center justify-between px-4 md:px-8 py-3 md:py-4 mt-4 md:mt-6
           bg-black/40 backdrop-blur-2xl border border-white/10 rounded-full 
           transition-all duration-1000 ease-[cubic-bezier(0.23,1,0.32,1)]
           ${loaded ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-10"}
         `}
       >
-        <Link 
-          href="/" 
-          className="text-white font-black text-xl tracking-tighter cursor-pointer 
-                     hover:tracking-[0.3em] transition-all duration-700 select-none z-[101]"
-        >
-          LOTUS
-        </Link>
+        {/* LOGO */}
+      <Link
+  href="/"
+  className="relative flex items-center gap-3 text-white font-black text-lg md:text-xl 
+             tracking-tighter hover:tracking-[0.2em] transition-all duration-700 
+             select-none z-[101] group"
+>
+  <div className="relative w-10 h-10">
+    <Image
+      src="/favicon.ico"
+      alt="Lotus logo"
+      fill
+      className="object-contain transition-transform duration-[2.5s] group-hover:scale-110 rounded-full"
+    />
+  </div>
 
-        <nav className="hidden md:flex items-center gap-10">
+  LOTUS
+</Link>
+
+        {/* DESKTOP NAV */}
+        <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((item) => (
             <Link 
               key={item.name} 
@@ -78,38 +85,64 @@ const Header = () => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-4">
-          <button className="hidden sm:block text-white/50 text-[10px] uppercase tracking-widest hover:text-white transition-colors">
-            Login
-          </button>
+        {/* AUTH BUTTONS / USER INFO */}
+        <div className="flex items-center gap-2 md:gap-4 z-[101]">
           
+          {session ? (
+            /* Если юзер вошел: Показываем аватарку и кнопку выхода */
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-end hidden sm:flex">
+                <span className="text-white text-[9px] uppercase font-bold tracking-widest leading-none">
+                  {session.user?.name}
+                </span>
+                <button 
+                  onClick={() => signOut()} 
+                  className="text-white/40 text-[8px] uppercase hover:text-white transition-colors"
+                >
+                  Log out
+                </button>
+              </div>
+              <img 
+                src={session.user?.image || ""} 
+                alt="Profile" 
+                className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-white/20 object-cover"
+              />
+            </div>
+          ) : (
+            /* Если юзер не вошел: Показываем кнопку входа */
+            <button 
+              onClick={() => signIn("google")}
+              className="px-4 md:px-6 py-2 bg-white text-black text-[9px] md:text-[10px] uppercase font-bold rounded-full hover:bg-zinc-200 transition-all active:scale-95"
+            >
+              Sign Up
+            </button>
+          )}
+
+          {/* Burger Button */}
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="flex flex-col justify-center items-center w-10 h-10 gap-1.5 md:hidden z-[101]"
+            className="flex flex-col justify-center items-center w-8 h-8 md:hidden ml-2 gap-1.5"
           >
             <motion.span 
               animate={isOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
-              className="w-6 h-[1px] bg-white transition-all duration-300" 
+              className="w-5 h-[1px] bg-white" 
             />
             <motion.span 
               animate={isOpen ? { rotate: -45, y: -0.5 } : { rotate: 0, y: 0 }}
-              className="w-6 h-[1px] bg-white transition-all duration-300" 
+              className="w-5 h-[1px] bg-white" 
             />
-          </button>
-
-          <button className="hidden md:block px-6 py-2 bg-white text-black text-[10px] uppercase font-bold rounded-full hover:bg-zinc-200 transition-all">
-            Sign Up
           </button>
         </div>
       </header>
 
+      {/* MOBILE MENU */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial="closed"
             animate="opened"
             exit="exit"
-            variants={menuVariants} // Ошибка здесь исчезнет
+            variants={menuVariants}
             className="fixed inset-0 z-[90] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center md:hidden"
           >
             <nav className="flex flex-col items-center gap-8">
@@ -123,12 +156,22 @@ const Header = () => {
                   <Link 
                     href={item.href}
                     onClick={() => setIsOpen(false)}
-                    className="text-white text-3xl font-serif italic tracking-tighter hover:text-zinc-400 transition-colors"
+                    className="text-white text-3xl font-light tracking-tighter hover:text-zinc-400 transition-colors"
                   >
                     {item.name}
                   </Link>
                 </motion.div>
               ))}
+              
+              {/* Доп. кнопка выхода в мобильном меню, если юзер вошел */}
+              {session && (
+                <button 
+                  onClick={() => signOut()}
+                  className="mt-4 text-white/50 uppercase text-xs tracking-widest"
+                >
+                  Log out
+                </button>
+              )}
             </nav>
           </motion.div>
         )}

@@ -102,7 +102,7 @@ const itemVariant: Variants = {
         <div className="absolute bottom-0 left-0 w-full z-30 bg-black/80 backdrop-blur-md py-6 border-t border-white/5 overflow-hidden">
           <div className="flex animate-marquee whitespace-nowrap gap-8 hover:[animation-play-state:paused] cursor-default">
             {[...Array(4)].map((_, i) => (
-              <span key={i} className="text-white/10 text-3xl md:text-5xl font-black uppercase tracking-tight mx-4 hover:text-white/40 transition-colors duration-500">
+              <span key={i} className="text-white text-3xl md:text-5xl font-black uppercase tracking-tight mx-4 hover:text-white/40 transition-colors duration-500">
                 {rollerText}
               </span>
             ))}
